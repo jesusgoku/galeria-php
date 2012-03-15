@@ -4,5 +4,7 @@ if(!defined('__GALERIA_COFIG__')):
 	
 	
 	define('TXT_TITULO_SITIO','');
+	
+	
 endif;
 ?>
