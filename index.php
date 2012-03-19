@@ -39,7 +39,7 @@ $(function(){
 		container : 'container',
 		drop_element: 'filelist',
 		max_file_size : '10mb',
-		url : 'libs/examples/upload.php',
+		url : 'upload.php',
 		flash_swf_url : 'libs/plupload/plupload.flash.swf',
 		silverlight_xap_url : 'libs/plupload/plupload.silverlight.xap',
 		filters : [
@@ -48,7 +48,7 @@ $(function(){
 		],
 		//resize : {width : 320, height : 240, quality : 90},
 		multipart: true,
-		multipart_params: { accion: 3 },
+		multipart_params: { accion: 1 },
 		chunk_size: '1024kb',
 		urlstream_upload: true
 	});
@@ -56,7 +56,7 @@ $(function(){
 	uploader.bind('Init', function(up, params) {
 		var tmplRuntime = $('#tmplRuntime').html();
 		var tmplOutput = Mustache.render(tmplRuntime,params);
-		$('#filelist').append(tmplOutput);//("<div>Runtime Actual: " + params.runtime + "</div>");
+		$('#filelist').append(tmplOutput);
 	});
 
 	$('#uploadfiles').click(function(e) {
@@ -90,7 +90,7 @@ $(function(){
 
 	uploader.bind('FilesAdded', function(up, files) {
 		var dataTmpl = { listaArchivos: new Array() };
-		$.each(files, function(i, file) { dataTmpl.listaArchivos.push({ id_archivo: file.id, nombre: file.name }); });
+		$.each(files, function(i, file) { if(file.status == 1) dataTmpl.listaArchivos.push({ id_archivo: file.id, nombre: file.name }); });
 		var tmplFilesAdd = $('#tmplFilesAdd').html();
 		var tmplOutput = Mustache.render(tmplFilesAdd, dataTmpl);
 		$('#filelist').append(tmplOutput);
@@ -109,8 +109,9 @@ $(function(){
 		var tmplError = $('#tmplError').html();
 		var tmplOutput = Mustache.render(tmplError, err);
 		$('#filelist').append(tmplOutput);
-
 		up.refresh(); // Reposition Flash/Silverlight
+		// Para que se eliminen
+		$('#' + err.file.id).delay(3000).fadeOut(function(){ $(this).remove(); });
 	});
 
 	uploader.bind('FileUploaded', function(up, file, info) {
@@ -162,7 +163,7 @@ $(function(){
 		{{#listaArchivos}}
 		<li id="{{id_archivo}}">
 			<a href="javascript:;">{{nombre}} <b class="label label-info">Esperando</b> <span class="label label-important">eliminar</span></a>
-			<div class="progress progress-striped active" style="display:none;">
+			<div class="progress progress-success progress-striped active" style="display:none;">
 				<div class="bar" style="width:0%;"></div>
 			</div>
 		</li>
