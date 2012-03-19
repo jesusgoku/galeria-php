@@ -38,32 +38,73 @@ $(function(){
 		browse_button : 'pickfiles',
 		container : 'container',
 		drop_element: 'filelist',
-		max_file_size : '10mb',
+		max_file_size : '100mb',
 		url : 'upload.php',
 		flash_swf_url : 'libs/plupload/plupload.flash.swf',
 		silverlight_xap_url : 'libs/plupload/plupload.silverlight.xap',
 		filters : [
-			{title : "Image files", extensions : "jpg,gif,png"},
-			{title : "Zip files", extensions : "zip"}
+			//{title : "Zip files", extensions : "zip"},
+			{ title : 'Archivos de Imagen', extensions : 'jpg,gif,png,jpeg' }
 		],
 		//resize : {width : 320, height : 240, quality : 90},
 		multipart: true,
 		multipart_params: { accion: 1 },
-		chunk_size: '1024kb',
-		urlstream_upload: true
+		chunk_size: '4096kb',
+		urlstream_upload: true,
+		// Eventos
+		preinit: {
+			Init: function(up, info){
+				var tmplRuntime = $('#tmplRuntime').html();
+				var tmplOutput = Mustache.render(tmplRuntime,info);
+				$('#filelist').append(tmplOutput);
+			},
+			UploadFile: function(up, file){ /*console.warn('UploadFile');*/ }
+		},
+		init: {
+			Refresh: function(up) { /*console.log('Refresh');*/ },
+			StateChanged: function(up) { /*console.log('StateChanged');*/ },
+			QueueChanged: function(up) { /*console.log('Queue Changed');*/ },
+			UploadProgress: function(up, file) {
+				$('#' + file.id + " b").html(file.percent + "%");
+				$('#' + file.id + ' .progress').show();
+				$('#' + file.id + ' .bar').css({ width: file.percent + '%' });
+			},
+			FilesAdded: function(up, files) {
+				var dataTmpl = { listaArchivos: new Array() };
+				$.each(files, function(i, file) { if(file.status == 1) dataTmpl.listaArchivos.push({ id_archivo: file.id, nombre: file.name }); });
+				var tmplFilesAdd = $('#tmplFilesAdd').html();
+				var tmplOutput = Mustache.render(tmplFilesAdd, dataTmpl);
+				$('#filelist').append(tmplOutput);
+				up.refresh(); // Reposition Flash/Silverlight
+			},
+			FilesRemoved: function(up, files) { /*console.log('Files Removed');*/ },
+			FileUploaded: function(up, file, info) {
+				data = $.parseJSON(info.response);
+				$('#' + file.id + " b").text('Completo');
+				$('#' + file.id).delay(3000).fadeOut(function(){ $(this).remove(); up.refresh(); });
+			},
+			ChunkUploaded: function(up, file, info) { /*console.log('Chunk Uploaded');*/ },
+			Error: function(up, args) {
+				var dataTmpl = { listaArchivos: new Array() };
+				var tmplError = $('#tmplError').html();
+				var tmplOutput = Mustache.render(tmplError, args);
+				$('#filelist').append(tmplOutput);
+				up.refresh();
+				// Para que se eliminen
+				$('#' + args.file.id).delay(3000).fadeOut(function(){ $(this).remove(); up.refresh(); });
+			}
+		}
 	});
 
-	uploader.bind('Init', function(up, params) {
-		var tmplRuntime = $('#tmplRuntime').html();
-		var tmplOutput = Mustache.render(tmplRuntime,params);
-		$('#filelist').append(tmplOutput);
-	});
+	uploader.init();
 
+	// Comenzar la carga de archivos
 	$('#uploadfiles').click(function(e) {
 		uploader.start();
 		e.preventDefault();
 	});
 	
+	// Limpiar la lista de archivos
 	$('#clearlist').click(function(e){
 		e.preventDefault();
 		var id_archivo = '';
@@ -71,53 +112,24 @@ $(function(){
 		$('#filelist li:has(a)').each(function(){
 			id_archivo = $(this).attr('id');
 			var archivo = uploader.getFile(id_archivo);
-			uploader.removeFile(archivo);
-			$('#' + id_archivo).fadeOut(function(){ $(this).remove(); });
+			if(archivo.status == 1){
+				uploader.removeFile(archivo);
+				$('#' + id_archivo).fadeOut(function(){ $(this).remove(); });
+			}
 		});
 		uploader.refresh();
 	});
 	
-	$(document).on('click','#filelist .label-important',function(e){
+	// Eliminar un elemento de la lista
+	$('#filelist').on('click','.label-important',function(e){
 		var $this = $(this);
 		var id_archivo = $this.closest('li').attr('id');
 		var archivo = uploader.getFile(id_archivo);
-		uploader.removeFile(archivo);
-		$('#' + id_archivo).fadeOut(function(){ $(this).remove(); });
+		if(archivo.status == 1){
+			uploader.removeFile(archivo);
+			$('#' + id_archivo).fadeOut(function(){ $(this).remove(); });
+		}
 		uploader.refresh();
-	});
-
-	uploader.init();
-
-	uploader.bind('FilesAdded', function(up, files) {
-		var dataTmpl = { listaArchivos: new Array() };
-		$.each(files, function(i, file) { if(file.status == 1) dataTmpl.listaArchivos.push({ id_archivo: file.id, nombre: file.name }); });
-		var tmplFilesAdd = $('#tmplFilesAdd').html();
-		var tmplOutput = Mustache.render(tmplFilesAdd, dataTmpl);
-		$('#filelist').append(tmplOutput);
-
-		up.refresh(); // Reposition Flash/Silverlight
-	});
-
-	uploader.bind('UploadProgress', function(up, file) {
-		$('#' + file.id + " b").html(file.percent + "%");
-		$('#' + file.id + ' .progress').show();
-		$('#' + file.id + ' .bar').css({ width: file.percent + '%' });
-	});
-
-	uploader.bind('Error', function(up, err) {
-		var dataTmpl = { listaArchivos: new Array() };
-		var tmplError = $('#tmplError').html();
-		var tmplOutput = Mustache.render(tmplError, err);
-		$('#filelist').append(tmplOutput);
-		up.refresh(); // Reposition Flash/Silverlight
-		// Para que se eliminen
-		$('#' + err.file.id).delay(3000).fadeOut(function(){ $(this).remove(); });
-	});
-
-	uploader.bind('FileUploaded', function(up, file, info) {
-		data = $.parseJSON(info.response);
-		$('#' + file.id + " b").text('Completo');
-		$('#' + file.id).delay(3000).fadeOut(function(){ $(this).remove(); });
 	});
 	
 });
@@ -141,6 +153,16 @@ $(function(){
 			<p>Y si no encuentras la que buscas subela...</p>
 			<p><a href="#subir" data-toggle="tab" class="btn btn-primary btn-large">Subir</a></p>
 		</div><!-- /.hero-unit -->
+		<ul class="unstyled thumbnails">
+			<?php
+			$folderUpload = 'uploads/';
+			$fd = opendir($folderUpload);
+			while($file = readdir($fd)):
+			if($file != '.' && $file != '..'):
+			?>
+			<li class="thumbnail"><a href="javascript:;"><img src="<?php echo $folderUpload . $file; ?>" width="240" /></a><h5>Hola</h5><p>Hola Mundo</p><p><a class="btn btn-primary">Hola</a></p></li>
+			<?php endif; endwhile; ?>
+		</ul>
 	  </div><!-- /#imagenes -->
 	  <div class="tab-pane" id="subir">
 		<!--<div class="hero-unit">
@@ -149,10 +171,11 @@ $(function(){
 		</div>--><!-- /.hero-unit -->
 		<div id="container">
 			<ul id="filelist" class="nav nav-list"></ul>
-			<br />
-			<a id="pickfiles" href="#" class="btn btn-primary">Seleccionar archivos</a>
-			<a id="uploadfiles" href="#" class="btn btn-success">Subir Archivos</a>
-			<a id="clearlist" href="#" class="btn btn-success">Borrar Lista</a>
+			<div class="form-actions">
+				<a id="pickfiles" href="#" class="btn btn-primary">Seleccionar archivos</a>
+				<a id="uploadfiles" href="#" class="btn btn-success">Subir Archivos</a>
+				<a id="clearlist" href="#" class="btn btn-warning">Borrar Lista</a>
+			</div><!-- /.form-actions -->
 		</div><!-- /#container -->
 
 	  </div><!-- /#subir -->
