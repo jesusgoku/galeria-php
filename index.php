@@ -46,7 +46,7 @@ $(function(){
 			{title : 'Archivos Comprimidos', extensions : 'zip,rar,tar.gz,tar.bz2'},
 			{ title : 'Archivos de Imagen', extensions : 'jpg,gif,png,jpeg' }
 		],
-		//resize : {width : 320, height : 240, quality : 90},
+		//resize : { width : 320, height: 500, quality : 90},
 		multipart: true,
 		multipart_params: { accion: 1 },
 		chunk_size: '4096kb',
@@ -69,7 +69,7 @@ $(function(){
 				$('#' + file.id + ' .progress').show();
 				$('#' + file.id + ' .bar').css({ width: file.percent + '%' });
 			},
-			FilesAdded: function(up, files) {
+			FilesAdded: function(up, files) {console.log(files);
 				var dataTmpl = { listaArchivos: new Array() };
 				$.each(files, function(i, file){
 					if(file.status == 1)
@@ -77,7 +77,8 @@ $(function(){
 							id: file.id,
 							name: file.name,
 							size: function(){
-								return (file.size > 1048576) ? Math.round((file.size / 1048576) * 10) / 10 + ' MB' : Math.round((file.size / 1024) * 10) / 10 + ' KB';
+								if(typeof file.size == 'undefined') return file.size;
+								else return (file.size > 1048576) ? Math.round((file.size / 1048576) * 10) / 10 + ' MB' : Math.round((file.size / 1024) * 10) / 10 + ' KB';
 							}
 						});
 				});
@@ -167,7 +168,7 @@ $(function(){
 			while($file = readdir($fd)):
 			if($file != '.' && $file != '..'):
 			?>
-			<li class="thumbnail"><a href="javascript:;"><img src="<?php echo $folderUpload . $file; ?>" width="240" /></a><h5>Hola</h5><p>Hola Mundo</p><p><a class="btn btn-primary">Hola</a></p></li>
+			<li><a class="thumbnail" href="javascript:;"><img src="<?php echo $folderUpload . $file; ?>" width="240" /></a></li>
 			<?php endif; endwhile; ?>
 		</ul>
 	  </div><!-- /#imagenes -->
@@ -191,8 +192,8 @@ $(function(){
 
 	<div id="tmplFilesAdd" class="templates">
 		{{#listaArchivos}}
-		<li id="{{id}}">
-			<a href="javascript:;">{{name}} <span class="label label-info">{{size}}</span> <b class="label label-info">Esperando</b> <span class="label label-important">eliminar</span></a>
+		<li id="{{id}}" data-id="{{id}}" data-size="{{size}}" data-name="{{name}}" data-role="archivo">
+			<a href="javascript:;">{{name}} {{#size}}<span class="label label-info">{{size}}</span>{{/size}} <b class="label label-info">Esperando</b> <span class="label label-important">eliminar</span></a>
 			<div class="progress progress-success progress-striped active" style="display:none;">
 				<div class="bar" style="width:0%;"></div>
 			</div>
@@ -201,10 +202,10 @@ $(function(){
 	</div>
 	<div id="tmplError" class="templates">
 		{{#file}}
-		<li id="{{file.id}}">
+		<li id="{{file.id}}" data-role="error">
 		{{/file}}
 		{{^file}}
-		<li>
+		<li data-role="error">
 		{{/file}}
 			<a href="javascript:;">Error: <span class="label label-warning">{{code}}</span> - <span class="label label-warning">{{message}}</span> {{#file}} Archivo: <span class="label label-warning">{{file.name}}</span>{{/file}}</a>
 		</li>
@@ -214,6 +215,9 @@ $(function(){
 		{{#features.dragdrop}}
 		<li class="active"><a href="javascript:;">Arrastre Aqui Para agregar archivos</a></li>
 		{{/features.dragdrop}}
+	</div>
+	<div id="tmplGaleriaLi" class="templates">
+		<li><a class="thumbnail" href="javascript:;"><img src="<?php echo $folderUpload; ?>{{file}}" width="240" /></a></li>
 	</div>
 </body>
 </html>
