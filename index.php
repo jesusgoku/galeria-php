@@ -43,7 +43,7 @@ $(function(){
 		flash_swf_url : 'libs/plupload/plupload.flash.swf',
 		silverlight_xap_url : 'libs/plupload/plupload.silverlight.xap',
 		filters : [
-			//{title : "Zip files", extensions : "zip"},
+			{title : 'Archivos Comprimidos', extensions : 'zip,rar,tar.gz,tar.bz2'},
 			{ title : 'Archivos de Imagen', extensions : 'jpg,gif,png,jpeg' }
 		],
 		//resize : {width : 320, height : 240, quality : 90},
@@ -55,7 +55,7 @@ $(function(){
 		preinit: {
 			Init: function(up, info){
 				var tmplRuntime = $('#tmplRuntime').html();
-				var tmplOutput = Mustache.render(tmplRuntime,info);
+				var tmplOutput = Mustache.render(tmplRuntime,up);
 				$('#filelist').append(tmplOutput);
 			},
 			UploadFile: function(up, file){ /*console.warn('UploadFile');*/ }
@@ -71,7 +71,16 @@ $(function(){
 			},
 			FilesAdded: function(up, files) {
 				var dataTmpl = { listaArchivos: new Array() };
-				$.each(files, function(i, file) { if(file.status == 1) dataTmpl.listaArchivos.push({ id_archivo: file.id, nombre: file.name }); });
+				$.each(files, function(i, file){
+					if(file.status == 1)
+						dataTmpl.listaArchivos.push({
+							id: file.id,
+							name: file.name,
+							size: function(){
+								return (file.size > 1048576) ? Math.round((file.size / 1048576) * 10) / 10 + ' MB' : Math.round((file.size / 1024) * 10) / 10 + ' KB';
+							}
+						});
+				});
 				var tmplFilesAdd = $('#tmplFilesAdd').html();
 				var tmplOutput = Mustache.render(tmplFilesAdd, dataTmpl);
 				$('#filelist').append(tmplOutput);
@@ -107,14 +116,12 @@ $(function(){
 	// Limpiar la lista de archivos
 	$('#clearlist').click(function(e){
 		e.preventDefault();
-		var id_archivo = '';
-		var archivo;
-		$('#filelist li:has(a)').each(function(){
-			id_archivo = $(this).attr('id');
-			var archivo = uploader.getFile(id_archivo);
-			if(archivo.status == 1){
-				uploader.removeFile(archivo);
-				$('#' + id_archivo).fadeOut(function(){ $(this).remove(); });
+		var archivos = new Array();
+		jQuery.each(uploader.files,function(clave,valor){ archivos.push(valor); });
+		jQuery.each(archivos,function(clave, valor){
+			if(valor.status == 1){//
+				uploader.removeFile(valor);
+				$('#' + valor.id).fadeOut(function(){ $(this).remove(); });
 			}
 		});
 		uploader.refresh();
@@ -184,8 +191,8 @@ $(function(){
 
 	<div id="tmplFilesAdd" class="templates">
 		{{#listaArchivos}}
-		<li id="{{id_archivo}}">
-			<a href="javascript:;">{{nombre}} <b class="label label-info">Esperando</b> <span class="label label-important">eliminar</span></a>
+		<li id="{{id}}">
+			<a href="javascript:;">{{name}} <span class="label label-info">{{size}}</span> <b class="label label-info">Esperando</b> <span class="label label-important">eliminar</span></a>
 			<div class="progress progress-success progress-striped active" style="display:none;">
 				<div class="bar" style="width:0%;"></div>
 			</div>
@@ -203,7 +210,10 @@ $(function(){
 		</li>
 	</div>
 	<div id="tmplRuntime" class="templates">
-		<li class="nav-header">Cargador: <span class="label label-success">{{runtime}}</a>
+		<li class="nav-header">Cargador: <span class="label label-success">{{runtime}}</span></li>
+		{{#features.dragdrop}}
+		<li class="active"><a href="javascript:;">Arrastre Aqui Para agregar archivos</a></li>
+		{{/features.dragdrop}}
 	</div>
 </body>
 </html>
