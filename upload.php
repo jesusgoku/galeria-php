@@ -148,7 +148,7 @@ if(isset($_REQUEST['accion'])){
 
 $dataResponse['error'] = isset($error) ? $error : false;
 $dataResponse['dataProce'] = isset($dataProce) ? $dataProce : false;
-$dataResponse['tipoMsj'] = $tipoMsj;
+$dataResponse['tipoMsj'] = isset($tipoMsj) ? $tipoMsj : MSJ_ERROR;
 
 echo json_encode($dataResponse);
 

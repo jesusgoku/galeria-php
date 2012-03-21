@@ -58,7 +58,9 @@ $(function(){
 				var tmplOutput = Mustache.render(tmplRuntime,up);
 				$('#filelist').append(tmplOutput);
 			},
-			UploadFile: function(up, file){ /*console.warn('UploadFile');*/ }
+			UploadFile: function(up, file){
+				$('#' + file.id + ' .label-important').remove();
+			}
 		},
 		init: {
 			Refresh: function(up) { /*console.log('Refresh');*/ },
@@ -69,7 +71,7 @@ $(function(){
 				$('#' + file.id + ' .progress').show();
 				$('#' + file.id + ' .bar').css({ width: file.percent + '%' });
 			},
-			FilesAdded: function(up, files) {console.log(files);
+			FilesAdded: function(up, files) {
 				var dataTmpl = { listaArchivos: new Array() };
 				$.each(files, function(i, file){
 					if(file.status == 1)
@@ -90,7 +92,7 @@ $(function(){
 			FilesRemoved: function(up, files) { /*console.log('Files Removed');*/ },
 			FileUploaded: function(up, file, info) {
 				data = $.parseJSON(info.response);
-				$('#' + file.id + " b").text('Completo');
+				$('#' + file.id + " b").html('<i class="icon icon-ok icon-white"></i> Completo').removeClass('label-info').addClass('label-success');
 				$('#' + file.id).delay(3000).fadeOut(function(){ $(this).remove(); up.refresh(); });
 			},
 			ChunkUploaded: function(up, file, info) { /*console.log('Chunk Uploaded');*/ },
@@ -129,7 +131,7 @@ $(function(){
 	});
 	
 	// Eliminar un elemento de la lista
-	$('#filelist').on('click','.label-important',function(e){
+	$('#filelist').on('click','.label-important',function(e){console.log('me lanzaron');
 		var $this = $(this);
 		var id_archivo = $this.closest('li').attr('id');
 		var archivo = uploader.getFile(id_archivo);
@@ -155,12 +157,12 @@ $(function(){
 	 
 	<div id="tabs-content"class="tab-content">
 	  <div class="tab-pane active in" id="imagenes">
-		<div class="hero-unit">
+		<!--<div class="hero-unit">
 			<h1>Galeria de Imagenes</h1>
 			<p>Echa una mirada a las imagenes disponibles, selecciona la que mas te gusta y usala en tus proyectos.</p>
 			<p>Y si no encuentras la que buscas subela...</p>
 			<p><a href="#subir" data-toggle="tab" class="btn btn-primary btn-large">Subir</a></p>
-		</div><!-- /.hero-unit -->
+		</div>--><!-- /.hero-unit -->
 		<ul class="unstyled thumbnails">
 			<?php
 			$folderUpload = 'uploads/';
