@@ -2,7 +2,15 @@
 require('config/config.php');
 require('config/config-galeria.php');
 
-$dataResponse = array('jsonrpc' => '2.0', 'result' => true, 'id' => '', 'error' => true, 'msj' => '', 'tipoMsj' => '', 'dataProce' => array());
+$dataResponse = array(
+	'jsonrpc' => '2.0',
+	'result' => true,
+	'id' => '',
+	'error' => true,
+	'msj' => '',
+	'tipoMsj' => MSJ_ERROR,
+	'dataProce' => array()
+);
 
 if(isset($_REQUEST['accion'])){
 	$accion = $_REQUEST['accion'];
