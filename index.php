@@ -131,7 +131,7 @@ $(function(){
 	});
 	
 	// Eliminar un elemento de la lista
-	$('#filelist').on('click','.label-important',function(e){console.log('me lanzaron');
+	$('#filelist').on('click','.label-important',function(e){
 		var $this = $(this);
 		var id_archivo = $this.closest('li').attr('id');
 		var archivo = uploader.getFile(id_archivo);
@@ -140,6 +140,18 @@ $(function(){
 			$('#' + id_archivo).fadeOut(function(){ $(this).remove(); });
 		}
 		uploader.refresh();
+	});
+	
+	// Galeria
+	$('#galeria-li').on('click','a',function(e){
+		e.preventDefault();
+		var $this = $(this);
+		var nombre = $this.data('nombre');
+		var image = $this.data('image');
+		$('#myModal h3').text(nombre);
+		$('#modal-image').attr({ src: image });
+		$('#modal-input').val(image);
+		$('#myModal').modal('show');
 	});
 	
 });
@@ -157,20 +169,26 @@ $(function(){
 	 
 	<div id="tabs-content"class="tab-content">
 	  <div class="tab-pane active in" id="imagenes">
-		<!--<div class="hero-unit">
+		<div class="hero-unit">
 			<h1>Galeria de Imagenes</h1>
 			<p>Echa una mirada a las imagenes disponibles, selecciona la que mas te gusta y usala en tus proyectos.</p>
 			<p>Y si no encuentras la que buscas subela...</p>
-			<p><a href="#subir" data-toggle="tab" class="btn btn-primary btn-large">Subir</a></p>
-		</div>--><!-- /.hero-unit -->
-		<ul class="unstyled thumbnails">
+			<!--<p><a href="#subir" data-toggle="tab" class="btn btn-primary btn-large">Subir</a></p>-->
+		</div><!-- /.hero-unit -->
+		<ul id="galeria-li" class="unstyled thumbnails">
 			<?php
 			$folderUpload = 'uploads/';
 			$fd = opendir($folderUpload);
 			while($file = readdir($fd)):
-			if($file != '.' && $file != '..'):
+			if(preg_match('/\.(jpg|jpeg|png|gif)$/',$file)):
+			$imgInfo = getimagesize($folderUpload . $file);
 			?>
-			<li><a class="thumbnail" href="javascript:;"><img src="<?php echo $folderUpload . $file; ?>" width="240" /></a></li>
+			<li>
+				<a class="thumbnail" href="#myModal" data-image="<?php echo $folderUpload . $file; ?>" data-nombre="<?php echo $file; ?>">
+					<img src="<?php echo $folderUpload . $file; ?>" width="240" />
+				</a>
+				<span class="label"><?php echo $imgInfo[0]; ?>x<?php echo $imgInfo[1]; ?></span>
+			</li>
 			<?php endif; endwhile; ?>
 		</ul>
 	  </div><!-- /#imagenes -->
@@ -220,6 +238,53 @@ $(function(){
 	</div>
 	<div id="tmplGaleriaLi" class="templates">
 		<li><a class="thumbnail" href="javascript:;"><img src="<?php echo $folderUpload; ?>{{file}}" width="240" /></a></li>
+	</div>
+	
+	<div class="modal templates" id="myModal">
+		<div class="modal-header">
+			<a class="close" data-dismiss="modal">×</a>
+			<h3>Modal header</h3>
+		</div>
+		<div class="modal-body">
+			<ul class="unstyled thumbnails pull-left">
+				<li><a class="thumbnail" href="javascript:;"><img id="modal-image" src="" width="240" /></a></li>
+			</ul>
+			<div class="pull-left" style="margin-left:10px;">
+				<input type="text" id="modal-input" class="input-large" />
+				<div class="btn-toolbar">
+					<div class="btn-group">
+						<button class="btn btn-info">Cortar</button>
+						<button class="btn btn-info dropdown-toggle" data-toggle="dropdown">
+							<span class="caret"></span>
+						</button>
+						<ul class="dropdown-menu">
+							<li><a href="#">800x600</a></li>
+							<li><a href="#">640x480</a></li>
+							<li><a href="#">480x320</a></li>
+							<li><a href="#">320x240</a></li>
+						</ul>
+					</div><!-- /.btn-group -->
+					<div class="btn-group">
+						<button class="btn btn-success">Copiar</button>
+						<button class="btn btn-success dropdown-toggle" data-toggle="dropdown">
+							<span class="caret"></span>
+						</button>
+						<ul class="dropdown-menu">
+							<li><a href="#">800x600</a></li>
+							<li><a href="#">640x480</a></li>
+							<li><a href="#">480x320</a></li>
+							<li><a href="#">320x240</a></li>
+						</ul>
+					</div><!-- /.btn-group -->
+				</div><!-- /.btn-toolbar -->
+				<button class="btn btn-danger">Eliminar</button>
+			</div>
+			<div class="clearfix"></div>
+		</div>
+		<div class="modal-footer">
+			<a href="#" class="btn" data-dismiss="modal">Close</a>
+			<!--<a href="#" class="btn btn-primary">Save changes</a>-->
+		</div>
 	</div>
 </body>
 </html>
