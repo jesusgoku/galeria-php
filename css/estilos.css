@@ -2,3 +2,5 @@
 /* CSS Document */
 
 .templates { display:none; }
+
+#galeria-li > li { overflow:hidden; clear:both; *margin-bottom:20px; }

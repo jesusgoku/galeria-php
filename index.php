@@ -7,6 +7,9 @@ require('config/config-galeria.php');
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title><?php echo TXT_TITULO_OWNER . ' - '. TXT_TITULO_SITIO; ?></title>
+<!--[if lt IE 9]>
+<script src="libs/html5.js"></script>
+<![endif]-->
 <link type="text/css" href="libs/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
 <link type="text/css" href="libs/bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet" />
 <script type="text/javascript" src="libs/jquery-1.7.1.min.js"></script>
@@ -175,21 +178,76 @@ $(function(){
 			<p>Y si no encuentras la que buscas subela...</p>
 			<!--<p><a href="#subir" data-toggle="tab" class="btn btn-primary btn-large">Subir</a></p>-->
 		</div><!-- /.hero-unit -->
-		<ul id="galeria-li" class="unstyled thumbnails">
+		<ul id="galeria-li" class="unstyled">
 			<?php
+			/*
+			Abro el directorio con las imagenes y recojo las extensiones validas (jpg,jpeg,png,gif)
+			Luego las ingreso en una array en donde cada imagen tiene como indice la fecha de modificacion
+			Luego aplico un reverse sort por clave sobre ese array.
+			*/
+			$archivosArray = array();
 			$folderUpload = 'uploads/';
-			$fd = opendir($folderUpload);
-			while($file = readdir($fd)):
+			$dp = opendir($folderUpload);
+			while($file = readdir($dp)):
 			if(preg_match('/\.(jpg|jpeg|png|gif)$/',$file)):
+				$archivosArray[filectime($folderUpload . $file)] = $file;
+			endif; endwhile;
+			krsort($archivosArray);
+			/*
+			Ahora muestro las fotos con el array ordenado
+			*/
+			foreach($archivosArray as $file):
 			$imgInfo = getimagesize($folderUpload . $file);
+			$id = sha1($file . time());
 			?>
-			<li>
-				<a class="thumbnail" href="#myModal" data-image="<?php echo $folderUpload . $file; ?>" data-nombre="<?php echo $file; ?>">
-					<img src="<?php echo $folderUpload . $file; ?>" width="240" />
-				</a>
-				<span class="label"><?php echo $imgInfo[0]; ?>x<?php echo $imgInfo[1]; ?></span>
+			<li id="<?php echo $id; ?>">
+				<ul class="unstyled thumbnails pull-left">
+					<li>
+						<a class="thumbnail" href="javascript:;" data-image="<?php echo $folderUpload . $file; ?>" data-nombre="<?php echo $file; ?>" style="width:240px;">
+							<img src="<?php echo $folderUpload . $file; ?>" width="240" />
+						</a>
+					</li>
+				</ul>
+				<div class="pull-left" style="margin-left:10px;">
+					<input type="text" class="input-xxlarge" value="<?php echo $folderUpload . $file; ?>" placeholder="nada" />
+					<br />
+					<span class="label"><?php echo $imgInfo[0]; ?> x <?php echo $imgInfo[1]; ?> px</span>
+					<div class="btn-toolbar">
+						<div class="btn-group">
+							<a href="#" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
+								Cortar
+								<span class="caret"></span>
+							</a>
+							<ul class="dropdown-menu">
+								<li><a href="#">800x600</a></li>
+								<li><a href="#">640x480</a></li>
+								<li><a href="#">480x320</a></li>
+								<li><a href="#">320x240</a></li>
+							</ul>
+						</div><!-- /.btn-group -->
+						<div class="btn-group">
+							<a href="#" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
+								Copiar
+								<span class="caret"></span>
+							</a>
+							<ul class="dropdown-menu">
+								<li><a href="#">800x600</a></li>
+								<li><a href="#">640x480</a></li>
+								<li><a href="#">480x320</a></li>
+								<li><a href="#">320x240</a></li>
+							</ul>
+						</div><!-- /.btn-group -->
+						<div class="btn-group">
+							<button class="btn btn-danger">Eliminar</button>
+						</div><!-- /.btn-group -->
+					</div><!-- /.btn-toolbar -->
+				</div><!-- /.pull-left -->
+				<!--<div class="clearfix"></div>-->
 			</li>
-			<?php endif; endwhile; ?>
+			<?php endforeach; ?>
+			<?php
+			closedir($dp);
+			?>
 		</ul>
 	  </div><!-- /#imagenes -->
 	  <div class="tab-pane" id="subir">
@@ -210,81 +268,83 @@ $(function(){
 	</div><!-- /#tab-content -->
 </div><!-- /.tabbable -->
 
-	<div id="tmplFilesAdd" class="templates">
-		{{#listaArchivos}}
-		<li id="{{id}}" data-id="{{id}}" data-size="{{size}}" data-name="{{name}}" data-role="archivo">
-			<a href="javascript:;">{{name}} {{#size}}<span class="label label-info">{{size}}</span>{{/size}} <b class="label label-info">Esperando</b> <span class="label label-important">eliminar</span></a>
-			<div class="progress progress-success progress-striped active" style="display:none;">
-				<div class="bar" style="width:0%;"></div>
-			</div>
-		</li>
-		{{/listaArchivos}}
-	</div>
-	<div id="tmplError" class="templates">
-		{{#file}}
-		<li id="{{file.id}}" data-role="error">
-		{{/file}}
-		{{^file}}
-		<li data-role="error">
-		{{/file}}
-			<a href="javascript:;">Error: <span class="label label-warning">{{code}}</span> - <span class="label label-warning">{{message}}</span> {{#file}} Archivo: <span class="label label-warning">{{file.name}}</span>{{/file}}</a>
-		</li>
-	</div>
-	<div id="tmplRuntime" class="templates">
-		<li class="nav-header">Cargador: <span class="label label-success">{{runtime}}</span></li>
-		{{#features.dragdrop}}
-		<li class="active"><a href="javascript:;">Arrastre Aqui Para agregar archivos</a></li>
-		{{/features.dragdrop}}
-	</div>
-	<div id="tmplGaleriaLi" class="templates">
-		<li><a class="thumbnail" href="javascript:;"><img src="<?php echo $folderUpload; ?>{{file}}" width="240" /></a></li>
-	</div>
-	
-	<div class="modal templates" id="myModal">
-		<div class="modal-header">
-			<a class="close" data-dismiss="modal">×</a>
-			<h3>Modal header</h3>
+<div id="tmplFilesAdd" class="templates">
+	{{#listaArchivos}}
+	<li id="{{id}}" data-id="{{id}}" data-size="{{size}}" data-name="{{name}}" data-role="archivo">
+		<a href="javascript:;">{{name}} {{#size}}<span class="label label-info">{{size}}</span>{{/size}} <b class="label label-info">Esperando</b> <span class="label label-important">eliminar</span></a>
+		<div class="progress progress-success progress-striped active" style="display:none;">
+			<div class="bar" style="width:0%;"></div>
 		</div>
-		<div class="modal-body">
-			<ul class="unstyled thumbnails pull-left">
-				<li><a class="thumbnail" href="javascript:;"><img id="modal-image" src="" width="240" /></a></li>
-			</ul>
-			<div class="pull-left" style="margin-left:10px;">
-				<input type="text" id="modal-input" class="input-large" />
-				<div class="btn-toolbar">
-					<div class="btn-group">
-						<button class="btn btn-info">Cortar</button>
-						<button class="btn btn-info dropdown-toggle" data-toggle="dropdown">
-							<span class="caret"></span>
-						</button>
-						<ul class="dropdown-menu">
-							<li><a href="#">800x600</a></li>
-							<li><a href="#">640x480</a></li>
-							<li><a href="#">480x320</a></li>
-							<li><a href="#">320x240</a></li>
-						</ul>
-					</div><!-- /.btn-group -->
-					<div class="btn-group">
-						<button class="btn btn-success">Copiar</button>
-						<button class="btn btn-success dropdown-toggle" data-toggle="dropdown">
-							<span class="caret"></span>
-						</button>
-						<ul class="dropdown-menu">
-							<li><a href="#">800x600</a></li>
-							<li><a href="#">640x480</a></li>
-							<li><a href="#">480x320</a></li>
-							<li><a href="#">320x240</a></li>
-						</ul>
-					</div><!-- /.btn-group -->
-				</div><!-- /.btn-toolbar -->
-				<button class="btn btn-danger">Eliminar</button>
-			</div>
-			<div class="clearfix"></div>
-		</div>
-		<div class="modal-footer">
-			<a href="#" class="btn" data-dismiss="modal">Close</a>
-			<!--<a href="#" class="btn btn-primary">Save changes</a>-->
-		</div>
-	</div>
+	</li>
+	{{/listaArchivos}}
+</div><!-- /#tmplFilesAdd -->
+
+<div id="tmplError" class="templates">
+	{{#file}}
+	<li id="{{file.id}}" data-role="error">
+	{{/file}}
+	{{^file}}
+	<li data-role="error">
+	{{/file}}
+		<a href="javascript:;">Error: <span class="label label-warning">{{code}}</span> - <span class="label label-warning">{{message}}</span> {{#file}} Archivo: <span class="label label-warning">{{file.name}}</span>{{/file}}</a>
+	</li>
+</div><!-- /#tmplError -->
+
+<div id="tmplRuntime" class="templates">
+	<li class="nav-header">Cargador: <span class="label label-success">{{runtime}}</span></li>
+	{{#features.dragdrop}}
+	<li class="active"><a href="javascript:;">Arrastre Aqui Para agregar archivos</a></li>
+	{{/features.dragdrop}}
+</div><!-- /#tmplRuntime -->
+
+<div id="tmplGaleriaLi" class="templates">
+	{{#listaArchivos}}
+	<li id="{{id}}">
+		<ul class="unstyled thumbnails pull-left">
+			<li>
+				<a class="thumbnail" href="javascript:;" data-image="{{ruta}}" data-nombre="{{nombre}}" style="width:240px;">
+					<img src="{{ruta}}" width="240" />
+				</a>
+			</li>
+		</ul>
+		<div class="pull-left" style="margin-left:10px;">
+			<input type="text" class="input-xxlarge" value="{{ruta}}" placeholder="nada" />
+			<br />
+			<span class="label">{{ancho}} x {{alto}} px</span>
+			<div class="btn-toolbar">
+				<div class="btn-group">
+					<a href="#" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
+						Cortar
+						<span class="caret"></span>
+					</a>
+					<ul class="dropdown-menu">
+						<li><a href="#">800x600</a></li>
+						<li><a href="#">640x480</a></li>
+						<li><a href="#">480x320</a></li>
+						<li><a href="#">320x240</a></li>
+					</ul>
+				</div><!-- /.btn-group -->
+				<div class="btn-group">
+					<a href="#" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
+						Copiar
+						<span class="caret"></span>
+					</a>
+					<ul class="dropdown-menu">
+						<li><a href="#">800x600</a></li>
+						<li><a href="#">640x480</a></li>
+						<li><a href="#">480x320</a></li>
+						<li><a href="#">320x240</a></li>
+					</ul>
+				</div><!-- /.btn-group -->
+				<div class="btn-group">
+					<button class="btn btn-danger">Eliminar</button>
+				</div><!-- /.btn-group -->
+			</div><!-- /.btn-toolbar -->
+		</div><!-- /.pull-left -->
+		<!--<div class="clearfix"></div>-->
+	</li>
+	{{/listaArchivos}}
+</div><!-- /#tmplGaleriaLi -->
+
 </body>
 </html>

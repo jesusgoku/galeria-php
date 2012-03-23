@@ -142,6 +142,18 @@ if(isset($_REQUEST['accion'])){
 			$dataProce['result'] = true;//die(json_encode($dataProce));//'{"jsonrpc" : "2.0", "result" : null, "id" : "id"}');
 			
 			break;
+		case 5:
+			// Lista de Ficheros
+			$archivosArray = array();
+			$folderUpload = 'uploads/';
+			$dp = opendir($folderUpload);
+			while($file = readdir($dp)):
+			if(preg_match('/\.(jpg|jpeg|png|gif)$/',$file)):
+				$archivosArray[filectime($folderUpload . $file)] = $file;
+			endif; endwhile;
+			krsort($archivosArray);
+			$dataProce['listaArchivos'] = $archivosArray;
+			break;
 		default: $msj = 'opcion no valida';
 	}
 }else $msj = 'origen incorrecto';
