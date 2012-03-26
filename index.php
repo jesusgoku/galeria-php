@@ -152,15 +152,19 @@ $(function(){
 	});
 	
 	// Galeria
-	$('#galeria-li').on('click','a',function(e){
+	$('#galeria-li').on('click','a[data-accion]',function(e){
 		e.preventDefault();
-		var $this = $(this);
-		var nombre = $this.data('nombre');
-		var image = $this.data('image');
-		$('#myModal h3').text(nombre);
-		$('#modal-image').attr({ src: image });
-		$('#modal-input').val(image);
-		$('#myModal').modal('show');
+		var dataForm = $(this).data();
+		var $this = $('#' + dataForm.id);
+		var pregunta = dataForm.accion == 3 ? confirm('Realmente desea eliminar esta foto?') : true;
+		if(pregunta){
+			$.post('upload.php',dataForm,function(data){
+				data = $.parseJSON(data);
+				if(data.tipoMsj == 'msj_ok'){
+					if(dataForm.accion == 3) $('#' + dataForm.id).fadeOut('slow',function(){ $(this).remove(); });
+				}
+			});
+		}
 	});
 	
 	$.post('upload.php',{ accion: 5 }, function(data){
@@ -268,10 +272,10 @@ $(function(){
 						<span class="caret"></span>
 					</a>
 					<ul class="dropdown-menu">
-						<li><a href="#">800x600</a></li>
-						<li><a href="#">640x480</a></li>
-						<li><a href="#">480x320</a></li>
-						<li><a href="#">320x240</a></li>
+						<li><a href="#" data-accion="6" data-id="{{id}}" data-name="{{name}}" data-opcion="800">800px</a></li>
+						<li><a href="#" data-accion="6" data-id="{{id}}" data-name="{{name}}" data-opcion="640">640px</a></li>
+						<li><a href="#" data-accion="6" data-id="{{id}}" data-name="{{name}}" data-opcion="480">480px</a></li>
+						<li><a href="#" data-accion="6" data-id="{{id}}" data-name="{{name}}" data-opcion="320">320px</a></li>
 					</ul>
 				</div><!-- /.btn-group -->
 				<div class="btn-group">
@@ -280,14 +284,14 @@ $(function(){
 						<span class="caret"></span>
 					</a>
 					<ul class="dropdown-menu">
-						<li><a href="#">800x600</a></li>
-						<li><a href="#">640x480</a></li>
-						<li><a href="#">480x320</a></li>
-						<li><a href="#">320x240</a></li>
+						<li><a href="#" data-accion="7" data-id="{{id}}" data-name="{{name}}" data-opcion="800">800px</a></li>
+						<li><a href="#" data-accion="7" data-id="{{id}}" data-name="{{name}}" data-opcion="640">640px</a></li>
+						<li><a href="#" data-accion="7" data-id="{{id}}" data-name="{{name}}" data-opcion="480">480px</a></li>
+						<li><a href="#" data-accion="7" data-id="{{id}}" data-name="{{name}}" data-opcion="320">320px</a></li>
 					</ul>
 				</div><!-- /.btn-group -->
 				<div class="btn-group">
-					<button class="btn btn-danger">Eliminar</button>
+					<a class="btn btn-danger" data-accion="3" data-id="{{id}}">Eliminar</a>
 				</div><!-- /.btn-group -->
 			</div><!-- /.btn-toolbar -->
 		</div><!-- /.pull-left -->

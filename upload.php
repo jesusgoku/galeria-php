@@ -170,6 +170,11 @@ if(isset($_REQUEST['accion'])){
 			}
 			
 			break;
+		case 3:
+			// Eliminar Foto
+			$msj = 'eliminado';
+			$tipoMsj = MSJ_OK;
+			break;
 		case 5:
 			// Lista de Ficheros
 			/*
