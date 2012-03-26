@@ -46,7 +46,7 @@ $(function(){
 		flash_swf_url : 'libs/plupload/plupload.flash.swf',
 		silverlight_xap_url : 'libs/plupload/plupload.silverlight.xap',
 		filters : [
-			{title : 'Archivos Comprimidos', extensions : 'zip,rar,tar.gz,tar.bz2'},
+			/*{title : 'Archivos Comprimidos', extensions : 'zip,rar,tar.gz,tar.bz2'},*/
 			{ title : 'Archivos de Imagen', extensions : 'jpg,gif,png,jpeg' }
 		],
 		//resize : { width : 320, height: 500, quality : 90},
@@ -97,6 +97,12 @@ $(function(){
 				data = $.parseJSON(info.response);
 				$('#' + file.id + " b").html('<i class="icon icon-ok icon-white"></i> Completo').removeClass('label-info').addClass('label-success');
 				$('#' + file.id).delay(3000).fadeOut(function(){ $(this).remove(); up.refresh(); });
+				if(typeof data.dataProce.listaArchivos != 'undefined'){
+					var tmplGaleriaLi = $('#tmplGaleriaLi').html();
+					var tmplOutput = Mustache.render(tmplGaleriaLi, data.dataProce);
+					$('#galeria-li').prepend(tmplOutput);//.delay(1000).find('#' + data.dataProce.listaArchivos.id + ' img').attr({ src: data.dataProce.listaArchivos.ruta_thumb });
+					$('#' + data.dataProce.listaArchivos.id + ' img').attr({ src: data.dataProce.listaArchivos.ruta_thumb });
+				}
 			},
 			ChunkUploaded: function(up, file, info) { /*console.log('Chunk Uploaded');*/ },
 			Error: function(up, args) {
@@ -157,6 +163,18 @@ $(function(){
 		$('#myModal').modal('show');
 	});
 	
+	$.post('upload.php',{ accion: 5 }, function(data){
+		data = $.parseJSON(data);
+		if(typeof data.dataProce.listaArchivos != 'undefined'){
+			var tmplGaleriaLi = $('#tmplGaleriaLi').html();
+			var tmplOutput = Mustache.render(tmplGaleriaLi, data.dataProce);
+			$('#galeria-li').prepend(tmplOutput);
+			$.each(data.dataProce.listaArchivos,function(clave,valor){
+				$('#' + valor.id + ' img').attr({ src: valor.ruta_thumb });
+			});
+		}
+	});
+	
 });
 //-->
 </script>
@@ -179,75 +197,7 @@ $(function(){
 			<!--<p><a href="#subir" data-toggle="tab" class="btn btn-primary btn-large">Subir</a></p>-->
 		</div><!-- /.hero-unit -->
 		<ul id="galeria-li" class="unstyled">
-			<?php
-			/*
-			Abro el directorio con las imagenes y recojo las extensiones validas (jpg,jpeg,png,gif)
-			Luego las ingreso en una array en donde cada imagen tiene como indice la fecha de modificacion
-			Luego aplico un reverse sort por clave sobre ese array.
-			*/
-			$archivosArray = array();
-			$folderUpload = 'uploads/';
-			$dp = opendir($folderUpload);
-			while($file = readdir($dp)):
-			if(preg_match('/\.(jpg|jpeg|png|gif)$/',$file)):
-				$archivosArray[filectime($folderUpload . $file)] = $file;
-			endif; endwhile;
-			krsort($archivosArray);
-			/*
-			Ahora muestro las fotos con el array ordenado
-			*/
-			foreach($archivosArray as $file):
-			$imgInfo = getimagesize($folderUpload . $file);
-			$id = sha1($file . time());
-			?>
-			<li id="<?php echo $id; ?>">
-				<ul class="unstyled thumbnails pull-left">
-					<li>
-						<a class="thumbnail" href="javascript:;" data-image="<?php echo $folderUpload . $file; ?>" data-nombre="<?php echo $file; ?>" style="width:240px;">
-							<img src="<?php echo $folderUpload . $file; ?>" width="240" />
-						</a>
-					</li>
-				</ul>
-				<div class="pull-left" style="margin-left:10px;">
-					<input type="text" class="input-xxlarge" value="<?php echo $folderUpload . $file; ?>" placeholder="nada" />
-					<br />
-					<span class="label"><?php echo $imgInfo[0]; ?> x <?php echo $imgInfo[1]; ?> px</span>
-					<div class="btn-toolbar">
-						<div class="btn-group">
-							<a href="#" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
-								Cortar
-								<span class="caret"></span>
-							</a>
-							<ul class="dropdown-menu">
-								<li><a href="#">800x600</a></li>
-								<li><a href="#">640x480</a></li>
-								<li><a href="#">480x320</a></li>
-								<li><a href="#">320x240</a></li>
-							</ul>
-						</div><!-- /.btn-group -->
-						<div class="btn-group">
-							<a href="#" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
-								Copiar
-								<span class="caret"></span>
-							</a>
-							<ul class="dropdown-menu">
-								<li><a href="#">800x600</a></li>
-								<li><a href="#">640x480</a></li>
-								<li><a href="#">480x320</a></li>
-								<li><a href="#">320x240</a></li>
-							</ul>
-						</div><!-- /.btn-group -->
-						<div class="btn-group">
-							<button class="btn btn-danger">Eliminar</button>
-						</div><!-- /.btn-group -->
-					</div><!-- /.btn-toolbar -->
-				</div><!-- /.pull-left -->
-				<!--<div class="clearfix"></div>-->
-			</li>
-			<?php endforeach; ?>
-			<?php
-			closedir($dp);
-			?>
+
 		</ul>
 	  </div><!-- /#imagenes -->
 	  <div class="tab-pane" id="subir">
@@ -302,15 +252,15 @@ $(function(){
 	<li id="{{id}}">
 		<ul class="unstyled thumbnails pull-left">
 			<li>
-				<a class="thumbnail" href="javascript:;" data-image="{{ruta}}" data-nombre="{{nombre}}" style="width:240px;">
-					<img src="{{ruta}}" width="240" />
+				<a class="thumbnail" href="javascript:;" data-image="{{ruta}}" data-nombre="{{name}}" style="width:240px;">
+					<img src="{{ruta_thumb}}" width="240" />
 				</a>
 			</li>
 		</ul>
 		<div class="pull-left" style="margin-left:10px;">
 			<input type="text" class="input-xxlarge" value="{{ruta}}" placeholder="nada" />
 			<br />
-			<span class="label">{{ancho}} x {{alto}} px</span>
+			<span class="label">{{width}} x {{height}} px</span>
 			<div class="btn-toolbar">
 				<div class="btn-group">
 					<a href="#" class="btn btn-info dropdown-toggle" data-toggle="dropdown">

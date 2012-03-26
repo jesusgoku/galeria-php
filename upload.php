@@ -6,11 +6,15 @@ $dataResponse = array(
 	'jsonrpc' => '2.0',
 	'result' => true,
 	'id' => '',
-	'error' => true,
+	'error' => array(),
 	'msj' => '',
 	'tipoMsj' => MSJ_ERROR,
 	'dataProce' => array()
 );
+
+$error = array();
+$tipoMsj = MSJ_ERROR;
+$msj = '';
 
 if(isset($_REQUEST['accion'])){
 	$accion = $_REQUEST['accion'];
@@ -110,15 +114,14 @@ if(isset($_REQUEST['accion'])){
 						if ($in) {
 							while ($buff = fread($in, 4096))
 								fwrite($out, $buff);
-						} else
-							$dataProce['error'] = array('code' => 101, 'message' => 'Failed to open input stream.');//die('{"jsonrpc" : "2.0", "error" : {"code": 101, "message": "Failed to open input stream."}, "id" : "id"}');
+						} else $error = array('code' => 101, 'message' => 'Failed to open input stream.');
 						fclose($in);
 						fclose($out);
 						@unlink($_FILES['file']['tmp_name']);
-					} else
-						$dataProce['error'] = array('code' => 102, 'message' => 'Failed to open output stream.');//die('{"jsonrpc" : "2.0", "error" : {"code": 102, "message": "Failed to open output stream."}, "id" : "id"}');
-				} else
-					$dataProce['error'] = array('code' => 103, 'message' => 'Failed to move uploaded file.');//die('{"jsonrpc" : "2.0", "error" : {"code": 103, "message": "Failed to move uploaded file."}, "id" : "id"}');
+						
+					} else $error = array('code' => 102, 'message' => 'Failed to open output stream.');
+					
+				} else $error = array('code' => 103, 'message' => 'Failed to move uploaded file.');
 			} else {
 				// Open temp file
 				$out = fopen($targetDir . DIRECTORY_SEPARATOR . $fileName, $chunk == 0 ? "wb" : "ab");
@@ -129,21 +132,51 @@ if(isset($_REQUEST['accion'])){
 					if ($in) {
 						while ($buff = fread($in, 4096))
 							fwrite($out, $buff);
-					} else
-						$dataProce['error'] = array('code' => 101, 'message' => 'Failed to open input stream.');//die('{"jsonrpc" : "2.0", "error" : {"code": 101, "message": "Failed to open input stream."}, "id" : "id"}');
+					} else $error = array('code' => 101, 'message' => 'Failed to open input stream.');
 			
 					fclose($in);
 					fclose($out);
-				} else
-					$dataProce['error'] = array('code' => 102, 'message' => 'Failed to open output stream.');//die('{"jsonrpc" : "2.0", "error" : {"code": 102, "message": "Failed to open output stream."}, "id" : "id"}');
+				} else $error = array('code' => 102, 'message' => 'Failed to open output stream.');
 			}
 			
 			// Return JSON-RPC response
-			$dataProce['result'] = true;//die(json_encode($dataProce));//'{"jsonrpc" : "2.0", "result" : null, "id" : "id"}');
+			$result = empty($error) ? true : false;
+			if($result){
+				// La Fotografia se guardo correctamente
+				$tipoMsj = MSJ_OK;
+				if(( $chunks == 0 && $chunk == 0 ) || $chunk == ($chunks - 1)){
+					
+					require('libs/asido/class.asido.php');
+					asido::driver('gd');
+					
+					$img_rsz = asido::image($targetDir . $fileName, $targetDir . 'thumbs/' . $fileName);
+					asido::width($img_rsz,240);
+					$img_rsz->save(ASIDO_OVERWRITE_ENABLED);
+					
+					$imgInfo = getimagesize($targetDir . $fileName);
+					$imgId = sha1(time());
+					$dataProce['listaArchivos'] = array(
+						'id' => $imgId,
+						'name' => $fileName,
+						'width' => $imgInfo[0],
+						'height' => $imgInfo[1],
+						'ruta' => $targetDir . $fileName,
+						'ruta_thumb' => $targetDir . 'thumbs/' . $fileName
+					);
+					
+				}
+			}else{
+				// No se guardo la fotografia
+			}
 			
 			break;
 		case 5:
 			// Lista de Ficheros
+			/*
+			Abro el directorio con las imagenes y recojo las extensiones validas (jpg,jpeg,png,gif)
+			Luego las ingreso en una array en donde cada imagen tiene como indice la fecha de modificacion
+			Luego aplico un reverse sort por clave sobre ese array.
+			*/
 			$archivosArray = array();
 			$folderUpload = 'uploads/';
 			$dp = opendir($folderUpload);
@@ -152,15 +185,29 @@ if(isset($_REQUEST['accion'])){
 				$archivosArray[filectime($folderUpload . $file)] = $file;
 			endif; endwhile;
 			krsort($archivosArray);
-			$dataProce['listaArchivos'] = $archivosArray;
+			$archivosProce = array();
+			foreach($archivosArray as $archivo):
+				$fileInfo = getimagesize($folderUpload . $archivo);
+				$fileId = sha1(time() . $archivo);
+				$archivosProce[] = array(
+						'id' => $fileId,
+						'name' => $archivo,
+						'width' => $fileInfo[0],
+						'height' => $fileInfo[1],
+						'ruta' => $folderUpload . $archivo,
+						'ruta_thumb' => $folderUpload . 'thumbs/' . $archivo
+				);
+			endforeach;
+			$dataProce['listaArchivos'] = $archivosProce;
 			break;
 		default: $msj = 'opcion no valida';
 	}
 }else $msj = 'origen incorrecto';
 
-$dataResponse['error'] = isset($error) ? $error : false;
-$dataResponse['dataProce'] = isset($dataProce) ? $dataProce : false;
+$dataResponse['error'] = isset($error) ? $error : array();
+$dataResponse['dataProce'] = isset($dataProce) ? $dataProce : array();
 $dataResponse['tipoMsj'] = isset($tipoMsj) ? $tipoMsj : MSJ_ERROR;
+$dataResponse['result'] = isset($result) ? $result : false;
 
 echo json_encode($dataResponse);
 
