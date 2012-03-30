@@ -11,7 +11,7 @@ require('config/config-galeria.php');
 <script src="libs/html5.js"></script>
 <![endif]-->
 <link type="text/css" href="libs/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
-<link type="text/css" href="libs/bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet" />
+<!--<link type="text/css" href="libs/bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet" />-->
 <script type="text/javascript" src="libs/jquery-1.7.1.min.js"></script>
 <script type="text/javascript" src="libs/bootstrap/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="libs/mustache/mustache.js"></script>
@@ -49,7 +49,7 @@ $(function(){
 			/*{title : 'Archivos Comprimidos', extensions : 'zip,rar,tar.gz,tar.bz2'},*/
 			{ title : 'Archivos de Imagen', extensions : 'jpg,gif,png,jpeg' }
 		],
-		//resize : { width : 320, height: 500, quality : 90},
+		//resize : { width : 320, height: 500, quality : 90 },
 		multipart: true,
 		multipart_params: { accion: 1 },
 		chunk_size: '4096kb',
@@ -159,16 +159,16 @@ $(function(){
 		var pregunta = dataForm.accion == 3 ? confirm('Realmente desea eliminar esta foto?') : true;
 		if(pregunta){
 			$.post('upload.php',dataForm,function(data){
-				data = $.parseJSON(data);
+				//data = $.parseJSON(data);
 				if(data.tipoMsj == 'msj_ok'){
 					if(dataForm.accion == 3) $('#' + dataForm.id).fadeOut('slow',function(){ $(this).remove(); });
 				}
-			});
+			},'json');
 		}
 	});
 	
 	$.post('upload.php',{ accion: 5 }, function(data){
-		data = $.parseJSON(data);
+		//data = $.parseJSON(data);
 		if(typeof data.dataProce.listaArchivos != 'undefined'){
 			var tmplGaleriaLi = $('#tmplGaleriaLi').html();
 			var tmplOutput = Mustache.render(tmplGaleriaLi, data.dataProce);
@@ -177,7 +177,7 @@ $(function(){
 				$('#' + valor.id + ' img').attr({ src: valor.ruta_thumb });
 			});
 		}
-	});
+	},'json');
 	
 });
 //-->

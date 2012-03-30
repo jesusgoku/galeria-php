@@ -172,6 +172,7 @@ if(isset($_REQUEST['accion'])){
 			break;
 		case 3:
 			// Eliminar Foto
+			
 			$msj = 'eliminado';
 			$tipoMsj = MSJ_OK;
 			break;
